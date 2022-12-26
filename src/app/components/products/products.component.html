@@ -1,7 +1,7 @@
 <p>
     Productos: {{ myShoppingCart.length }}
 </p>
-<p> Total: ${{ total }}</p>
+<p> Total: {{ total | currency: 'EUR' }}</p>
 <div class="products--grid">
     <app-product [product]="productItem" *ngFor="let productItem of productsArray" (addedProduct)="addToShoppingCart($event)"></app-product>
 </div>

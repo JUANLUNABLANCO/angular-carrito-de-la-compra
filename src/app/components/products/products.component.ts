@@ -1,47 +1,34 @@
-import { Component } from '@angular/core';
-import { Product } from '../../models/product.model';
+import { Component, OnInit } from '@angular/core';
 
 import { StoreService } from '../../services/store.service';
+import { ProductsService } from '../../services/products.service';
+
+import { Product } from '../../models/product.model';
 
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.scss']
 })
-export class ProductsComponent {
+export class ProductsComponent implements OnInit {
 
   myShoppingCart: Product[] = [];
   total = 0;
 
-  productsArray: Product[] = [
-    {
-      id: '1',
-      name: 'Automobil de juguete',
-      price: 100,
-      image: 'assets/images/album.jpg'
-  },
-  {
-      id: '2',
-      name: 'Muñeca de trapo',
-      price: 180,
-      image: 'assets/images/toy.jpg'
-  },
-  {
-      id: '3',
-      name: 'Pelota de futbol',
-      price: 120,
-      image: 'assets/images/house.jpg'
-  },
-  {
-    id: '4',
-    name: 'El choto gordo',
-    price: 120,
-    image: 'assets/images/bike.jpg'
-  }
-  ];
+  productsArray: Product[] = [];
 
-  constructor( private storeService: StoreService) {
-    this.myShoppingCart = this.storeService.getShoppingCart(); // esto no es asincrono por tanto se puede crear aquí, sinó deberías implementarlo en ngOnInit()
+  constructor(
+    private storeService: StoreService,
+    private productsService: ProductsService
+    ) {
+    this.myShoppingCart = this.storeService.getShoppingCart();
+  }
+
+  ngOnInit(): void {
+    this.productsService.getAllProducts().subscribe(data =>{
+      // console.log(data);
+      this.productsArray = data;
+    });
   }
 
   addToShoppingCart(product: Product){

@@ -1,4 +1,6 @@
-# CURSO DE ANGULAR COMPONENTES Y DIRECTIVAS: 
+# CURSO DE ANGULAR COMPONENTES Y DIRECTIVAS:  
+
+https://platzi.com/clases/2486-angular-componentes/41175-bienvenida/
 # my-store-app-medium-level
 
 ## INSTALACIONES
@@ -119,7 +121,7 @@ Angular language Service
 editor config
 
 
-## Crear componentes
+## Crear componentes [vídeo-2]
 
 > ng generate component todo
 > ng g c components/img
@@ -141,7 +143,7 @@ import { ImgComponent } from './components/img/img.component';
 ...
 --- ---
 
-## @Input pasar info desde el padre al hijo
+## @Input pasar info desde el padre al hijo [vídeo-3]
 --- img.component.ts ---
 export class ImgComponent {
   @Input() img: string = "valor init"
@@ -173,7 +175,7 @@ my-store-app-medium-level --> h1 de img componet
 ----------  hijo
 ----------------- padre
 
-## Outputs info del hijo al padre
+## Outputs info del hijo al padre [vídeo-4]
 
 --- img.component.html ---
 <img width="200" (error)="errorImgChargue()" [src]="img" alt="un avatar" *ngIf="img; else DefaultImage"
@@ -214,7 +216,7 @@ e internamente
 --- ---
 
 
-## reutilizacion de componentes
+## reutilizacion de componentes [vídeo-5]
 
 <app-product [product]="product" *ngFor="let product of products"></app-product>
 [product] --> viene del ProductComponent
@@ -247,7 +249,7 @@ tomará para cada iteración la info que obtiene del array y que coincide en tip
 Así que cuando angular vaya a renderizar el componente product le endosará uno a uno gracias al *ngFor, los datos correspondientes gracias al decorador @input()...
 
 
-## Ciclo de vida de un componente en angular [video]=6
+## Ciclo de vida de un componente en angular [video-6]
 
 import { Component, OnInit, OnChanges, AfterViewInit, OnDestroy } from '@angular/core';
 
@@ -277,7 +279,7 @@ export class ImgComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy
   }
 
 
-## ngOnChange() {}
+## ngOnChange() {} [vídeo-7]
 
 ngOnInit(): void {
     // before render, async here (fetch, promises, api,...), only one time
@@ -371,7 +373,7 @@ toggleMenu() {
 
 
 
-## comunicacion padre / hijo (carrito de compras)
+## comunicacion padre / hijo (carrito de compras) [vídeo-11]
 
 crearemos un evento en el hijo que se emitirá cuando el usuario haga click en un botón de añadir al carrito
 --- product.component.ts --- 
@@ -400,29 +402,514 @@ Ahora en el padre vamos a ecuchar el evento addedProduct<Product> // que nos tra
   }
 --- ---
 
-## servicios
+## servicios [vídeo-12] (Patron Inyección de Dependencias)
 
 > ng g s services/store
 
-import { Injectable } from '@angular/core';
+--- services/store.service.ts ---
+import { Injectable } from '@angular/core'; 
+import { Product } from '../models/product.model';
 
-@Injectable({  // decorador se puede injectar en otros componentes o servicios
+// gracias a ngular usamos el (Patron Inyección de Dependencias) sin darnos cuenta implementado estos servicios inyectados a los componentes
+@Injectable({
+  providedIn: 'root'
+})
+export class StoreService {
+  private myShoppingCart: Product[] = []; // metodo privado para proteger la accesibilidad, necesitas un getter
+
+  constructor() { }
+
+  addProduct(product: Product) { // añade un producto al carrito
+    this.myShoppingCart.push(product);
+  }
+  getShoppingCart() { // obtiene el listado de los productos añadidos al carrito, es un getter 
+    return this.myShoppingCart;
+  }
+  getTotal() { // obtiene el monto total de los productos que hay en el carrito
+    return this.myShoppingCart.reduce((sum, item) => sum + item.price, 0);
+  }
+}
+--- ---
+
+--- components/products/products.component.ts ---
+import { Component } from '@angular/core';
+import { Product } from '../../models/product.model';
+
+import { StoreService } from '../../services/store.service'; // importamos el servicio para usarlo
+
+@Component({
+  selector: 'app-products',
+  templateUrl: './products.component.html',
+  styleUrls: ['./products.component.scss']
+})
+export class ProductsComponent {
+
+  myShoppingCart: Product[] = []; // el carrito de la compra
+  total = 0;
+
+  productsArray: Product[] = [    // listado de productos de la tienda (ficticios)
+    {
+      id: '1',
+      name: 'Automobil de juguete',
+      price: 100,
+      image: 'assets/images/album.jpg'
+  },
+  { ...}];
+ 
+
+  constructor( private storeService: StoreService) { // se inyecta en el constructor
+    this.myShoppingCart = this.storeService.getShoppingCart(); // esto no es asincrono por tanto se puede crear aquí, sinó deberías implementarlo en ngOnInit()
+  }
+
+  addToShoppingCart(product: Product){ // método para añadir al carrito un producto usando el servicio
+    console.log(product);
+    // this.myShoppingCart.push(product); // anteriormente sin el servicio esto era así
+    // this.total = this.myShoppingCart.reduce((sum, item)=>{ sum +item.pprice, 0}); // anteriormente sin el servicio esto era así
+
+    // hemos externalizado estas dos lógicas al servcio, creando un código más mantenible y escalable
+    this.storeService.addProduct(product);
+    this.total = this.storeService.getTotal();
+  }
+}
+
+
+## Inyección de dependencias [vídeo-13] (Patron Inyección de Dependencias y Patron Singleton)
+
+Angular provee los servicios a través del decorador @Injectable({, con un scope por defecto provideIn: 'root'})
+
+@Injectable({
   providedIn: 'root'
 })
 export class StoreService {
 
-  constructor() { }
-}
-
-
-
-## Inyección de dependencias
-
-Angular provee los servicios a través del decorador un scope por defecto {provideIn: 'root'}
 en el constructor podemos iyectarlo privado o publico dependiendo de nuestra lógica.
 
-Los servicios se crean una sola vez en toda la app, para ser requeridos por los componentes, sin que para ello angular deba crear una instancia del servicio para cada componente PATRON SINGLETON
+Los servicios se crean una sola vez en toda la app, para ser requeridos por los componentes, sin que para ello angular deba crear una instancia del servicio para cada componente, que lo requiera (PATRON SINGLETON)
 
+Los componentes pueden inyectar servicios y los servicios, también pueden inyectar otros servicios, hay que tener cuidao de no hacer inyecciones bidireccionales, de A a B y de B a A.
+
+A Service <-- inyecta B Service
+B Service <-- inyecta A Service
+A <--> B
+
+Esto de arriba daría un error de referencia circular
+
+## Obteniendo datos de una api [video-14]
+
+módulo http: @angular/common/http
+
+API: fakestoreapi.com  // productos de coña para pruebas
+
+### forma de usarla
+
+fetch('https://fakestoreapi.com/products')
+            .then(res=>res.json())
+            .then(json=>console.log(json))
+
+### creando el servicio
+
+> ng g s services/products   // el automáticamente le añade el .service o .component o lo que sea, no debes ponerlo sino tendrías cosas como: productsServiceService
+
+--- products.service.ts ---
+import { Injectable, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';  // debe ser importado su modulo padre en app.module.ts, para poder usar este servicio, que nos ofrece angular
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductsService implements OnInit{
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit(){
+
+  }
+  getAllPorduts() {
+    return this.http.get('https://fakestoreapi.com/products'); // fake o mock productos de una api, esto será asíncrono
+  }
+}
+--- ---
+--- app.module.ts ---
+import { HttpClientModule } from '@angular/common/http';  // este módulo se debe importar para poder usar HttpClient en nuestros servicios
+...
+@NgModule({
+  declarations: [
+    AppComponent,
+    ...
+  ],
+  imports: [
+    ...
+    HttpClientModule
+  ],
+  ...
+})
+...
+--- ---
+--- rpoducts.component.ts ---
+... teníamos esto un array de productos creado ficticiamente por nosotros, ahora usaremos una API y nuestro servicio de products.service.ts para traerlos aquí
+
+
+import { ProductsService } from '../../services/products.service.ts' // usaremos esto
+
+  // productsArray: Product[] = [
+  //   {
+  //     id: '1',
+  //     name: 'Automobil de juguete',
+  //     price: 100,
+  //     image: 'assets/images/album.jpg'
+  // },
+  // {
+  //     id: '2',
+  //     name: 'Muñeca de trapo',
+  //     price: 180,
+  //     image: 'assets/images/toy.jpg'
+  // },
+  // {
+  //     id: '3',
+  //     name: 'Pelota de futbol',
+  //     price: 120,
+  //     image: 'assets/images/house.jpg'
+  // },
+  // {
+  //   id: '4',
+  //   name: 'El choto gordo',
+  //   price: 120,
+  //   image: 'assets/images/bike.jpg'
+  // }
+  // ];
+
+  // ahora los traeremos de una API, utilizando nuestro servicio
+  productsArray: Product[] = [];
+
+  el fichero products.component quedaría así
+
+  --- products.component.ts ---
+import { Component } from '@angular/core';
+import { Product } from '../../models/product.model';
+
+// este componente usa dos servicios el de lso productos de la tienda y el de los productos que hay en el carrito
+import { StoreService } from '../../services/store.service';  // carrito
+import { ProductsService } from '../../services/products.service'; // productos de la tienda
+
+@Component({
+  selector: 'app-products',
+  templateUrl: './products.component.html',
+  styleUrls: ['./products.component.scss']
+})
+export class ProductsComponent implements OnInit {
+
+  myShoppingCart: Product[] = [];
+  total = 0;
+
+  productsArray: Product[] = []; // ahora estará vacío inicialmente hasta recuperarlos del servicio
+
+  // inyectamos todos los servicios siempre en el constructor, aunque para usarlos no siempre será aquí
+  constructor(
+    private storeService: StoreService,
+    private productsService: ProductsService
+    ) {
+    this.myShoppingCart = this.storeService.getShoppingCart();
+  }
+
+  ngOnInit(): void { // de hecho el servicio 2, es asíncrono y no lo podemos usar en el constructor
+    this.productsService.getAllProducts().subscribe(data =>{ // siempre hay que suscribirse a los servicios, puesto que los datos pueden cambiar y angular estará pendiente deesos cambios ?? creo ??
+      console.log(data); // puedes ver 20 productos completos en la consola, pero ahora no tenemos los productos, debido a que no los estamos devolviendo de moemento, hasta que no resolvamos el modelo nuestro para hacerlo coincidir con el modelo de la API.
+      
+      // si vas a la consola del navegador y entras en network/fecth/XHR y recargas verás la petición incluso información en los headers muy detallada
+      Request URL: https://fakestoreapi.com/products
+      Request Method: GET
+      Status Code: 200 
+      Remote Address: 188.114.96.5:443
+      Referrer Policy: strict-origin-when-cross-origin
+      ...
+      'Response Headers': {
+        'content type': 'application/json; charset=utf-8
+        }
+      ...
+      si vas a la pestaña preview, verás los datos formateados, si vas a response verá los datos sin formato en crudo, como puedes ver es un array de objetos en formato json, [{}.{},{},...], pero no es un array de Product, nuestro modelo, aunque tiene 90% compatibilidad, pues el objeto devuelto por el servcicio contiene casi todos los atributos de nuestro modelo, ¿Cómo le decimos al servicio que nos devuelva eso mismo un array de Product --> Product[] ?
+
+      1º importar el modelo 
+      2º en el servicio dentro de get implementemos esto get<Product[]>('...')
+
+      después debes asemejar el modelo al dato recibido, donde nosotros teníamos name la API tiene title, cambia eso en todos los ficheros que corresponda, el error de la consola te ayuda con ello.
+      También hay nuevos campos del modelo como: descripotion y category, implementalos.
+
+      Gracias al tipado de typescript podemos obtener un feedback temprano de ese tipo de eerores de tipado.
+
+
+      con eso bastaría, mira como ha quedado el products.service.ts, más abajo
+
+
+
+    });
+  }
+
+  addToShoppingCart(product: Product){
+    console.log(product);
+    this.storeService.addProduct(product);
+    this.total = this.storeService.getTotal();
+  }
+}
+--- ---
+--- products.service.ts  ---
+...
+import { Product } from '../models/product.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductsService implements OnInit{
+
+  constructor(private http: HttpClient) { }
+
+  ngOnInit(){
+
+  }
+  getAllProducts() {
+    return this.http.get<Product[]>('https://fakestoreapi.com/products');
+  }
+--- ---
+y en el products.component hay que realizar este cambio para obtener la data
+--- products.component ---
+...
+  ngOnInit(): void {
+    this.productsService.getAllProducts().subscribe(data =>{
+      // console.log(data);
+      this.productsArray = data; // la igualamos y ya la tenemos
+    });
+  }
+...
+--- ---
+_______________________________________________________________________________________________________________
+NOTA: si no quieres usar esa api puedes usar esta otra de platzi: https://api.escuelajs.co/docs/#/products/ProductsController_getAll, solo que tiene otras informaciones y deberías arreglar el modelo y los componentes que la usan
+_______________________________________________________________________________________________________________
+
+
+## PIPES [vídeo-15]
+
+ver documentación: https://angular.io/guide/pipes
+
+tuberías, entradas  --> transformación --> salidas
+
+<p> Total: {{ total | currency: 'EUR' }}</p> --> resultado  €319.00
+
+<p>today: {{new date() | date: 'yyyy/MM/dd' }}</p> --> resultado 2022/12/28
+
+ver documentación: https://angular.io/guide/pipes
+
+<p>message: {{'mI mEnSaJE'| uppercas }}</p> --> 'MI MENSAJE'
+
+
+## Construyendo un custom pipe
+
+> ng g p pipes/reverse
+
+--- archivo.pipe.ts ---
+import { Pipe, PipeTransform} from '@angular/core'
+
+@Pipe({
+  name: 'reverse'
+})
+export class ReversePipe implements PipeTransform{
+  transform(value: unknow, ...args: unknow): unknow {
+    return null;
+  }
+}
+--- ---
+
+te genera automáticamente este archivo y el spec de pruebas.
+
+<p> Title: {{ zapatillas nike | reverse }}</p>  --> ekin sallitapaz 
+
+
+
+## Directivas en angular [vídeo-17]
+
+> ng g d directives/highlight
+
+--- archivo.generado.ts ---
+import { Directive, ElementRef } from '@angular/core';
+
+@Directive({
+  selector: '[appHighlight]'
+})
+export class HighlightDirective {
+
+  constructor(private element: ElementRef) { 
+    this.element.nativeElement.style.backgroundColor = 'red';
+  }
+
+}
+--- ---
+--- ecomponente.cualquiera ---
+<p appHighlight >{{product.description}}</p>
+--- ---
+
+sin embargo si queremos escuchar eventos para actuar, debríamos hacer esto otro
+
+--- highlight.directive.ts ---
+import { Directive, ElementRef, HostListener } from '@angular/core';
+
+@Directive({
+  selector: '[appHighlight]'
+})
+export class HighlightDirective {
+
+  @HostListener('mouseenter') onMouseEnter() { // evento de ratón encima
+    this.element.nativeElement.style.backgroundColor = '#cc0000';
+    this.element.nativeElement.style.color = '#fff';
+  }
+
+  @HostListener('mouseleave') onMouseLeave() { // evento de ratón saliendo del elemento en cuestión
+    this.element.nativeElement.style.backgroundColor = '';
+    this.element.nativeElement.style.color = '#000';
+  }
+
+  constructor(private element: ElementRef) {
+    // element.nativeElement.style.backgroundColor = '#cc0000';
+    // element.nativeElement.style.color = '#fff';
+  }
+}
+--- ---
+
+## Reactividad y manejo del estado [vídeo-18] (PATRON OBSEVABLE)
+
+
+State Management Strategy
+
+El concepto de reactividad básica es muy importante en el desarrollo front-end. Se trata del estado de la aplicación con respecto al valor de los datos en cada componente, cómo estos cambian a medida que el usuario interactúa y cómo se actualiza la interfaz.
+
+Problemas en la comunicación de componentes
+Cuando pensamos en cómo comunicar un componente padre con su hijo y viceversa, solemos utilizar los decoradores @Input() y @Output().
+
+Pero muchas veces, en aplicaciones grandes, la comunicación de componentes se vuelve mucho más compleja y estas herramientas no alcanzan cuando se necesita enviar información de un componente “hijo” a uno “abuelo”.
+
+![imagen1]('./../resourcesMD/reactividad-basica-angular-01.png')
+
+reactividad basica angular.png
+Solución a la comunicación de componentes
+Es recomendable implementar un patrón de diseño para mantener el estado de la aplicación centralizado en un único punto, para que todos los componentes accedan a ellos siempre que necesiten. A este punto central se lo conoce como Store.
+
+![imagen2]('./../resourcesMD/reactividad-basica-angular-02.png')
+
+
+Implementando un store de datos
+Los store de datos suelen implementarse haciendo uso de Observables.
+
+Paso 1:
+Importa la clase BehaviorSubject desde la librería RxJS, que te ayudará a crear una propiedad observable, a la cual tu componente pueda suscribirse y reaccionar ante ese cambio de estado.
+
+// services/store.service.ts
+import { BehaviorSubject } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class StoreService {
+
+  private myShoppingCart: Producto[] = [];
+  private myCart = new BehaviorSubject<Producto[]>([]);
+  public myCart$ = this.myCart.asObservable();
+
+  constructor() { }
+
+  addProducto(producto: Producto): void {
+    // El observable emitirá un nuevo valor con cada producto que se agregue al carrito.
+    this.myShoppingCart.push(producto);
+    this.myCart.next(this.myShoppingCart);
+  }
+
+}
+Paso 2: Suscribe a cualquier componente que necesites a estos datos, para reaccionar cuando estos cambian.
+
+// components/nav-bar/nav-bar.component.ts
+import { StoreService } from 'src/app/services/store.service';
+import { Subscription } from 'rxjs';
+
+@Component({
+  selector: 'app-nav-bar',
+  templateUrl: './nav-bar.component.html',
+  styleUrls: ['./nav-bar.component.scss']
+})
+export class NavBarComponent implements OnInit, OnDestroy {
+
+  private sub$!: Subscription;
+
+  constructor(
+    private storeService: StoreService
+  ) { }
+
+  ngOnInit(): void {
+    this.storeService.myCart$
+      .subscribe(data => {
+        // Cada vez que el observable emita un valor, se ejecutará este código
+        console.log(data);
+      });
+  }
+  
+  ngOnDestroy(): void {
+    this.sub$.unsubscribe();
+  }
+
+}
+El lugar más apropiado para esto es en ngOnInit(). No olvides guardar este observable en una propiedad del tipo Subscription para hacer un unsubscribe() cuando el componente sea destruido.
+
+### En nuestro  caso 
+
+... queremos que cuando se añada un producto al carro de la compra, desde el componete product, a través del servcicio store.service esto sea comunicado al carrito que se encunetra dentro del componente nav, podría ser más atómico y este nav estar en otro componente dentro e nav, pero para nuestro caso nos vale.
+
+así que en nav.componet haremos algunas modificaciones y en store.service.ts también
+
+--- store.service ---
+import { BehaviorSubject } from 'rxjs';  // PATRON OBSEVABLE
+...
+private myCart = new BehaviourSubject<Product[]>([]);
+
+myCart$ = this.myCart.asObservable();  // es un observable que escucha cambios
+
+addProduct(product: Product) {
+  this.myShoppingCart.push(product);
+  this.myCart.next(this.myShoppingCart); // transmitimos los cambios a todos los subscriptores
+}
+--- ---
+--- nav.component.ts ---
+import { StoreService } from '../../services/store.service'
+...
+
+counter = 0;
+
+constructor(private storeService: StoreService) {}
+
+ngOnInit(): void {
+  this.storeService.myCart$.subscribe(products =>{
+    this.counter = products.length;
+  })
+}
+--- ---
+--- nav.component.html ---
+<span class="counter" >{{ counter }}</span>
+--- ---
+
+## Aplicar un Linter (buenas prácticas de angular)
+
+> ng lint // comando para revisar el código, sino hay ningún linetr, nos informa de los linters disponibles en angular
+
+Instalaremos este
+
+> ng add @angular-eslint/schematics
+
+Y ahora si podemos ejecutar el comando anterior
+> ng lint // ahora analizará el código en busca de errores
+
+al ejecutarlo nos muestra los errores y malas practicas, hay algunos que no se pueden evitar, deberíamos poder deshabilitar el error o el warning de alguna manera
+
+También puedes modificar e implementar tus propias reglas de codificación editando el archivo .eslintrc.json que fue creado en la raíz del proyecto.
+
+## ESLINT EXTENSION
+
+The extension uses the ESLint library installed in the opened workspace folder. If the folder doesn't provide one the extension looks for a global install version. If you haven't installed ESLint either locally or globally do so by running npm install eslint in the workspace folder for a local install or npm install -g eslint for a global install.
+
+On new folders you might also need to create a .eslintrc configuration file. You can do this by either using the VS Code command Create ESLint configuration or by running the eslint command in a terminal. If you have installed ESLint globally (see above) then run eslint --init in a terminal. If you have installed ESLint locally then run .\node_modules\.bin\eslint --init under Windows and ./node_modules/.bin/eslint --init under Linux and Mac.
 
 
 
